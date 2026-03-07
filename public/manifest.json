@@ -1,0 +1,33 @@
+{
+    "name": "AF-WIN | Le Chiffre Gagnant",
+    "short_name": "AF-WIN",
+    "description": "Le jeu du chiffre le moins misé. Gagnez 5x votre mise !",
+    "theme_color": "#0a0c14",
+    "background_color": "#0a0c14",
+    "display": "standalone",
+    "orientation": "portrait",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "pwa-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "pwa-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "pwa-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "apple-touch-icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
