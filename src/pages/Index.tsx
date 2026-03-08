@@ -70,7 +70,7 @@ const Index = () => {
         <div className="flex flex-wrap gap-3 justify-center items-center mb-12">
           <FeatureChip icon={<Shield className="w-3.5 h-3.5" />} label="Tirage Équitable" color="gold" />
           <FeatureChip icon={<Trophy className="w-3.5 h-3.5" />} label="Tirage quotidien à 18h" color="emerald" />
-          <FeatureChip icon={<Zap className="w-3.5 h-3.5" />} label={` Mise x${settings?.multiplier || 5}`} color="gold" />
+          <FeatureChip icon={<Zap className="w-3.5 h-3.5" />} label={`Mise x${settings?.multiplier || 5}`} color="gold" />
         </div>
 
         {/* CTA */}
