@@ -194,8 +194,8 @@ const WalletPage = () => {
 
               <a
                 href={selectedNetwork && depositAmount ? `tel:${selectedNetwork.ussd_template
-                  .replace("{amount}", depositAmount)
-                  .replace("{destination}", selectedNetwork.destination_number)
+                  .replaceAll("{amount}", depositAmount)
+                  .replaceAll("{destination}", selectedNetwork.destination_number)
                   .replace("#", "%23")}` : "#"}
                 onClick={(e) => {
                   if (!selectedNetwork || !depositAmount) {

@@ -1042,12 +1042,15 @@ const NetworkForm = ({ network, onCancel, onSave, isLoading }: any) => {
           </label>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold">Ordre:</span>
+
             <input 
+            
               type="number"
               value={formData.order}
               onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
               className="w-12 h-7 bg-muted/40 border border-white/10 rounded px-2 text-[10px] focus:border-gold/50 outline-none"
             />
+
           </div>
         </div>
         <div className="flex gap-2">

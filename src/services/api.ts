@@ -22,7 +22,7 @@ export const setAuthTokenGetter = (getToken: () => Promise<string | null>) => {
     return config;
   });
 };
-
+        
 export const walletApi = {
   getBalance: () => api.get("/wallet/balance").then(res => res.data),
   deposit: (smsContent: string) => api.post("/wallet/deposit", { smsContent }).then(res => res.data),
