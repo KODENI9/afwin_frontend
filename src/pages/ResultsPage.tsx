@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
-import { Trophy, Star, CalendarDays, Sparkles } from "lucide-react";
+import { Trophy, CalendarDays, Sparkles } from "lucide-react";
 import { drawsApi, betsApi } from "@/services/api";
 import { toast } from "sonner";
 import { fireWinConfetti } from "@/components/ConfettiEffect";
@@ -92,24 +92,18 @@ const ResultsPage = () => {
                 </div>
               </div>
 
-              {winningBet ? (
+              {winningBet && (
                 <div className="space-y-1 py-2">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Votre gain</p>
                   <p className="text-3xl font-display font-black text-gold">
                     <CountUp end={winningBet.payout} suffix=" CFA" />
                   </p>
                 </div>
-              ) : (
-                <div className="mt-6 flex items-center justify-center gap-2 text-sm">
-                  <Star className="w-4 h-4 text-gold fill-gold" />
-                  <span className="text-muted-foreground">
-                    {Number(latest.totalPool || 0).toLocaleString("fr-FR")} CFA misés au total
-                  </span>
-                </div>
               )}
             </div>
 
             {/* Previous results */}
+            
             {previous.length > 0 && (
               <div className="space-y-3">
                 <h2 className="font-display text-xs uppercase tracking-widest text-muted-foreground pt-1">
@@ -123,9 +117,6 @@ const ResultsPage = () => {
                         {result.draw_date}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">
-                          {Number(result.totalPool || 0).toLocaleString("fr-FR")} CFA
-                        </span>
                         <div className="w-10 h-10 rounded-xl glass-gold flex items-center justify-center font-display text-lg font-bold text-gold">
                           {result.winningNumber ?? "?"}
                         </div>
