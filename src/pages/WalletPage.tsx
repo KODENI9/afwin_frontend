@@ -34,6 +34,7 @@ const WalletPage = () => {
   const { data: settings } = useQuery({
     queryKey: ["gameSettings"],
     queryFn: () => drawsApi.getSettings(),
+    enabled: !!user,
   });
 
   const minBet = settings?.min_bet || 100;
