@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -72,7 +73,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <AppContent />
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <AppContent />
+      </ThemeProvider>
     </ClerkProvider>
   );
 };

@@ -7,6 +7,8 @@ import { notificationsApi } from "@/services/api";
 import ProfileBanner from "./ProfileBanner";
 import InstallPrompt from "./InstallPrompt";
 
+import { ThemeToggle } from "./ThemeToggle";
+
 const navItems = [
   { to: "/play", label: "Parier", icon: Dices },
   { to: "/referrals", label: "Cadeaux", icon: Gift },
@@ -84,6 +86,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             <Link to="/notifications" className="relative">
               <Button
                 variant="ghost"
