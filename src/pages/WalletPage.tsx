@@ -16,6 +16,7 @@ const WalletPage = () => {
   const [smsContent, setSmsContent] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawProvider, setWithdrawProvider] = useState("Flooz");
+  const [withdrawAccount, setWithdrawAccount] = useState("");
   const [withdrawPin, setWithdrawPin] = useState("");
   const [activeAction, setActiveAction] = useState<"deposit" | "withdraw" | null>(null);
 
@@ -69,11 +70,12 @@ const WalletPage = () => {
   });
 
   const withdraw = useMutation({
-    mutationFn: (data: { amount: number; provider: string; pin: string }) => 
-      walletApi.withdraw(data.amount, data.provider, data.pin),
+    mutationFn: (data: { amount: number; provider: string; pin: string; account_details?: string }) => 
+      walletApi.withdraw(data.amount, data.provider, data.pin, data.account_details),
     onSuccess: () => {
       toast.success("Demande de retrait envoyée !", { description: "Un admin validera votre retrait sous peu." });
       setWithdrawAmount("");
+      setWithdrawAccount("");
       setWithdrawPin("");
       setActiveAction(null);
       invalidate();
@@ -90,7 +92,12 @@ const WalletPage = () => {
     const num = parseFloat(withdrawAmount);
     if (!num || num <= 0) { toast.error("Montant invalide"); return; }
     if (!withdrawPin) { toast.error("Code PIN requis"); return; }
-    withdraw.mutate({ amount: num, provider: withdrawProvider, pin: withdrawPin });
+    withdraw.mutate({ 
+      amount: num, 
+      provider: withdrawProvider, 
+      pin: withdrawPin,
+      account_details: withdrawAccount 
+    });
   };
 
   const toggleAction = (action: "deposit" | "withdraw") => {
@@ -280,6 +287,17 @@ const WalletPage = () => {
                 onChange={e => setWithdrawAmount(e.target.value)}
                 className="bg-muted/50 border-border text-foreground h-11 font-display focus:border-destructive/40"
                 min={minBet}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Numéro de réception (Optionnel)</p>
+              <Input
+                type="tel"
+                placeholder="Laisser vide pour utiliser votre numéro actuel"
+                value={withdrawAccount}
+                onChange={e => setWithdrawAccount(e.target.value)}
+                className="bg-muted/50 border-border text-foreground h-11 focus:border-gold/40"
               />
             </div>
             
