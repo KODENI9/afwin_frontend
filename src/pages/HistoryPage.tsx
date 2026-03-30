@@ -133,64 +133,84 @@ const HistoryPage = () => {
             </div>
           ) : (
             <>
-              <div className="grid gap-3">
-                <AnimatePresence initial={false}>
-                  {bets.map((bet: any, index: number) => {
-                    const cfg = statusConfig[bet.status as keyof typeof statusConfig] || statusConfig.PENDING;
-                    const isWon = bet.status === "WON";
-                    
-                    return (
-                      <motion.div
-                        key={bet.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md active:scale-[0.99]"
-                      >
-                        <div className="flex items-center gap-4">
-                          {/* Large Number Badge */}
-                          <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-display text-2xl font-bold shadow-sm transition-transform group-hover:scale-105 ${
-                            isWon 
-                              ? "bg-primary text-white" 
-                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                          }`}>
-                            {bet.number}
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-lg">{bet.amount.toLocaleString()} <span className="text-[10px] text-zinc-400 font-normal">CFA</span></span>
-                              <Badge variant="outline" className={`px-2 py-0 h-5 text-[10px] uppercase tracking-tighter ${cfg.badgeClass}`}>
-                                {cfg.label}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-zinc-400">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {new Date(bet.createdAt).toLocaleDateString("fr-FR", { day: '2-digit', month: 'short' })} à {new Date(bet.createdAt).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                          </div>
+              <div className="space-y-8">
+                {Array.from(new Set(bets.map((b: any) => b.draw_id))).map((drawId: any, groupIndex: number) => {
+                  const drawBets = bets.filter((b: any) => b.draw_id === drawId);
+                  const firstBet = drawBets[0];
+                  if (!firstBet) return null;
+                  
+                  const totalStake = drawBets.reduce((sum, b) => sum + (b.amount || 0), 0);
+                  const date = new Date(firstBet.createdAt || firstBet.created_at || Date.now());
+                  
+                  return (
+                    <div key={drawId || `group-${groupIndex}`} className="space-y-3">
+                      <div className="flex items-center justify-between px-2">
+                        <div className="flex items-center gap-2 text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Tirage du {date.toLocaleDateString("fr-FR", { day: '2-digit', month: 'short' })}</span>
+                          <span className="opacity-30">|</span>
+                          <span className="text-zinc-500">{date.toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
+                        <div className="text-[10px] font-bold text-zinc-500">
+                          TOTAL : {totalStake.toLocaleString()} CFA
+                        </div>
+                      </div>
 
-                        <div className="text-right">
-                          {isWon ? (
-                            <div className="space-y-0.5">
-                              <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Gain</p>
-                              <p className="text-emerald-600 dark:text-emerald-400 font-display text-xl font-bold leading-none">
-                                +{bet.payoutAmount.toLocaleString()}
-                              </p>
+                      <div className="grid gap-3">
+                        {drawBets.map((bet: any, index: number) => {
+                          const status = bet.status || "PENDING";
+                          const cfg = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
+                          const isWon = status === "WON";
+                          
+                          return (
+                            <div
+                              key={bet.id || `bet-${drawId}-${index}`}
+                              className="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md active:scale-[0.99]"
+                            >
+                              <div className="flex items-center gap-4">
+                                {/* Large Number Badge */}
+                                <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-display text-2xl font-bold shadow-sm transition-transform group-hover:scale-105 ${
+                                  isWon 
+                                    ? "bg-primary text-white" 
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                                }`}>
+                                  {bet.number}
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-lg">{(bet.amount || 0).toLocaleString()} <span className="text-[10px] text-zinc-400 font-normal">CFA</span></span>
+                                    <Badge variant="outline" className={`px-2 py-0 h-5 text-[10px] uppercase tracking-tighter ${cfg.badgeClass}`}>
+                                      {cfg.label}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-[10px] text-zinc-400">
+                                    ID: {(bet.id || "").substring(0, 8)}...
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                {isWon ? (
+                                  <div className="space-y-0.5">
+                                    <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Gain</p>
+                                    <p className="text-emerald-600 dark:text-emerald-400 font-display text-xl font-bold leading-none">
+                                      +{(bet.payoutAmount || 0).toLocaleString()}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[10px] text-zinc-400 italic">
+                                    {status === 'PENDING' ? 'En cours...' : 'Perdu'}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <p className="text-[10px] text-zinc-400 italic">
-                              {bet.status === 'PENDING' ? 'En cours...' : 'Non gagné'}
-                            </p>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {hasNextPage && (

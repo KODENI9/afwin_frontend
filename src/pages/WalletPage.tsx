@@ -50,7 +50,16 @@ const WalletPage = () => {
   }, [networks, selectedNetwork]);
 
   useEffect(() => {
-    if (transError) toast.error("Erreur de chargement des transactions");
+    if (transError) {
+      console.error("[Diagnostic Wallet] Erreur détectée sur myTransactions:", transError);
+      if ((transError as any).response) {
+        console.error(" - Status:", (transError as any).response.status);
+        console.error(" - Data:", (transError as any).response.data);
+      } else {
+        console.error(" - Message:", (transError as any).message);
+      }
+      toast.error("Erreur de chargement des transactions");
+    }
   }, [transError]);
 
   const invalidate = () => {
@@ -128,6 +137,14 @@ const WalletPage = () => {
           </p>
           <p className="text-muted-foreground font-medium mt-1">CFA</p>
         </div>
+
+        {/* Diagnostic Overlay (Visible in dev) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-[10px] opacity-30 fixed bottom-2 right-2 flex gap-2">
+            <span>TX: {isTransLoading ? 'Loading...' : transError ? 'ERROR' : 'OK'}</span>
+            <span>NET: {isNetLoading ? 'Loading...' : 'OK'}</span>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-3">

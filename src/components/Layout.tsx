@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Dices, History, Trophy, Wallet, LayoutDashboard, LogOut, Bell, User, Gift } from "lucide-react";
+import { Dices, History, Trophy, Wallet, LayoutDashboard, LogOut, Bell, User, Gift, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,8 @@ const navItems = [
   { to: "/play", label: "Parier", icon: Dices },
   { to: "/referrals", label: "Cadeaux", icon: Gift },
   { to: "/results", label: "Résultats", icon: Trophy },
-  { to: "/wallet", label: "Portefeuille", icon: Wallet },
+  { to: "/wallet", label: "Banque", icon: Wallet },
+  { to: "/send-money", label: "Envoi", icon: Send },
 ];
 
 const Layout = ({ children }: { children: React.ReactNode }) => {

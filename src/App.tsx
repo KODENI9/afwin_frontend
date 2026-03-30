@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ReferralPage from "./pages/ReferralPage";
+import SendMoneyPage from "./pages/SendMoneyPage";
 import NotFound from "./pages/NotFound";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -48,7 +49,7 @@ const AppContent = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -57,6 +58,7 @@ const AppContent = () => {
               <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
               <Route path="/results" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+              <Route path="/send-money" element={<ProtectedRoute><SendMoneyPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/referrals" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
@@ -70,11 +72,15 @@ const AppContent = () => {
   );
 };
 
+import ErrorBoundary from "@/components/ErrorBoundary";
+
 const App = () => {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <AppContent />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
       </ThemeProvider>
     </ClerkProvider>
   );

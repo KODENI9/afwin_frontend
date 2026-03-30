@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,18 @@ const BettingPage = () => {
   const { data: todayDraw, isLoading: isDrawLoading } = useQuery({
     queryKey: ["todayDrawInfo"],
     queryFn: () => drawsApi.getCurrent(),
+    refetchInterval: 30000, // Refresh every 30s
   });
+
+  const prevDrawIdRef = useRef<string | null>(null);
+  
+  // Reset entries ONLY when switching to a DIFFERENT draw ID (Transition between slots)
+  useEffect(() => {
+    if (todayDraw?.id && todayDraw.id !== prevDrawIdRef.current) {
+      setEntries({});
+      prevDrawIdRef.current = todayDraw.id;
+    }
+  }, [todayDraw?.id]);
 
   const { data: settings } = useQuery({
     queryKey: ["gameSettings"],
@@ -68,20 +79,28 @@ const BettingPage = () => {
     });
   };
 
-  const selectedNumbers = Object.keys(entries).map(Number).sort((a, b) => a - b);
-  const totalAmount = selectedNumbers.reduce((sum, n) => {
-    const amt = parseFloat(entries[n] || "0");
-    return sum + (isNaN(amt) ? 0 : amt);
-  }, 0);
+  const selectedNumbers = useMemo(() => 
+    Object.keys(entries).map(Number).sort((a, b) => a - b),
+    [entries]
+  );
+  
+  const totalAmount = useMemo(() => {
+    return selectedNumbers.reduce((sum, n) => {
+      const val = entries[n] || "0";
+      const amt = parseFloat(val);
+      return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
+  }, [selectedNumbers, entries]);
 
   const placeBet = useMutation({
     mutationFn: async () => {
       if (!todayDraw?.id) throw new Error("Tirage introuvable");
+      const requestId = crypto.randomUUID(); // Unique ID for idempotency
       const payload = selectedNumbers.map(n => ({
         number: n,
         amount: parseFloat(entries[n] || "0"),
       }));
-      return betsApi.placeBet(todayDraw.id, payload);
+      return betsApi.placeBet(todayDraw.id, payload, requestId);
     },
     onSuccess: () => {
       playBet();
@@ -133,33 +152,63 @@ const BettingPage = () => {
     placeBet.mutate();
   };
 
-  const isClosed = !!todayDraw && todayDraw.status !== "OPEN";
+  const isClosed = !todayDraw || todayDraw.status !== "OPEN";
 
   return (
     <Layout>
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-6 pb-20">
 
-        {/* Header */}
-        <div className="text-center space-y-2 pb-2">
-          <div className="inline-flex items-center gap-2 glass-gold rounded-full px-3 py-1 text-xs text-gold font-medium mb-3">
-            <Dices className="w-3 h-3" />
-            Tirage du jour
+        {/* Draw Header & Slot Info */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-2.5 h-2.5 rounded-full ${todayDraw?.status === 'OPEN' ? 'bg-emerald-500 animate-pulse outline outline-4 outline-emerald-500/20' : 'bg-muted-foreground/30'}`} />
+              <div>
+                <h1 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                  {todayDraw?.status === 'OPEN' ? 'Session Ouverte' : 'Session Fermée'}
+                </h1>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
+                  ID: {todayDraw?.id || 'Chargement...'}
+                </p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-white/10 text-white/40 uppercase tracking-widest border border-white/5">
+                    v1.2.0
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg- emerald-500/40 animate-pulse" />
+                </div>
+              </div>
+            </div>
+            
+            {todayDraw?.slotId && (
+              <div className="glass-gold px-3.5 py-1.5 rounded-2xl border border-gold/20 flex flex-col items-end shadow-lg shadow-gold/10">
+                <span className="text-[10px] font-black text-gold uppercase tracking-tighter">Slot {todayDraw.slotId}</span>
+                <span className="text-[8px] font-bold text-gold/60 uppercase">En direct</span>
+              </div>
+            )}
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Placer un <span className="gradient-text-gold">Pari</span>
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Sélectionnez un ou plusieurs chiffres. Chaque chiffre gagnant vous rapporte x{multiplier}.
-          </p>
         </div>
 
-        <CountdownTimer />
+        <CountdownTimer endTime={todayDraw?.endTime} status={todayDraw?.status} />
+        
+        {todayDraw?.status === 'CLOSED' && (
+          <div className="glass-card border-emerald-500/20 bg-emerald-500/5 p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="w-10 h-10 rounded-xl glass-emerald flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-emerald-brand animate-pulse" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">Résolution du tirage...</p>
+              <p className="text-[10px] text-muted-foreground">Les résultats seront affichés dans quelques instants.</p>
+            </div>
+          </div>
+        )}
 
         {/* Closed banner */}
-        {isClosed && (
+        {isClosed && !isDrawLoading && (
           <div className="glass rounded-xl p-4 border border-destructive/20 bg-destructive/5 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-            <p className="text-sm text-destructive font-medium">Tirage du jour terminé. Revenez demain !</p>
+            <p className="text-sm text-destructive font-medium">
+              {todayDraw ? "Le créneau actuel est fermé. Attendez le prochain tirage !" : "Aucun tirage actif en ce moment."}
+            </p>
           </div>
         )}
 
@@ -288,7 +337,8 @@ const BettingPage = () => {
               Récapitulatif
             </p>
             {selectedNumbers.map(num => {
-              const amt = parseFloat(entries[num] || "0");
+              const amtStr = entries[num] || "0";
+              const amt = parseFloat(amtStr);
               return (
                 <div key={num} className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Chiffre {num}</span>
@@ -337,6 +387,19 @@ const BettingPage = () => {
             </>
           )}
         </Button>
+
+        {/* Debug UI (Temporary as requested) */}
+        {todayDraw && (
+          <div className="mt-10 p-4 rounded-xl bg-black/40 border border-white/5 font-mono text-[9px] text-muted-foreground space-y-1">
+            <p className="text-gold font-bold uppercase mb-1">Debug Info (Current Slot)</p>
+            <p>ID: {todayDraw.id}</p>
+            <p>Start: {new Date(todayDraw.startTime).toLocaleString()}</p>
+            <p>End: {new Date(todayDraw.endTime).toLocaleString()}</p>
+            <p>Status: {todayDraw.status}</p>
+            <p>Slot: {todayDraw.slotId}</p>
+            <p>Now: {new Date().toLocaleString()}</p>
+          </div>
+        )}
       </div>
     </Layout>
   );

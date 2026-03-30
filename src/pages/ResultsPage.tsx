@@ -22,8 +22,16 @@ const ResultsPage = () => {
     if (error) toast.error("Erreur de chargement des résultats");
   }, [error]);
 
-  // Find the latest resolved
-  const drawnResults = Array.isArray(draws) ? draws.filter((d: any) => d.status === "RESOLVED") : [];
+  // Find the latest resolved and sort them strictly in frontend too
+  const drawnResults = Array.isArray(draws) 
+    ? [...draws].filter((d: any) => d.status === "RESOLVED")
+        .sort((a, b) => {
+          const dateA = new Date(a.startTime || a.draw_date).getTime();
+          const dateB = new Date(b.startTime || b.draw_date).getTime();
+          return dateB - dateA;
+        })
+    : [];
+  
   const latest = drawnResults[0];
   const previous = drawnResults.slice(1);
 
@@ -73,9 +81,16 @@ const ResultsPage = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground uppercase tracking-widest mb-4">
-                <CalendarDays className="w-3.5 h-3.5" />
-                {latest.draw_date}
+              <div className="flex flex-col items-center justify-center gap-1 mb-4">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-widest">
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  {latest.draw_date}
+                </div>
+                {latest.startTime && (
+                  <div className="text-[10px] font-bold text-gold uppercase tracking-widest">
+                    Tirage de {new Date(latest.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
               </div>
 
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-4">Chiffre Gagnant</p>
@@ -112,9 +127,16 @@ const ResultsPage = () => {
                 <div className="space-y-2">
                   {Array.isArray(previous) && previous.map((result: any) => (
                     <div key={result.id} className="glass-card rounded-xl px-4 py-3 flex items-center justify-between hover:border-white/10 transition-all duration-200">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        {result.draw_date}
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2 text-sm text-foreground font-medium">
+                          <CalendarDays className="w-3.5 h-3.5 text-gold/60" />
+                          {result.draw_date}
+                        </div>
+                        {result.startTime && (
+                          <div className="text-[10px] text-muted-foreground ml-5 uppercase tracking-wider font-bold">
+                            Tirage de {new Date(result.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl glass-gold flex items-center justify-center font-display text-lg font-bold text-gold">

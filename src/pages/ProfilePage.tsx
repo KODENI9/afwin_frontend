@@ -14,8 +14,10 @@ const ProfilePage = () => {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
+  const [editingPseudo, setEditingPseudo] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newPseudo, setNewPseudo] = useState("");
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetStep, setResetStep] = useState<"request" | "verify">("request");
   const [resetCode, setResetCode] = useState("");
@@ -32,7 +34,7 @@ const ProfilePage = () => {
   const maxBet = settings?.max_bet || 50000;
 
   const updateProfile = useMutation({
-    mutationFn: (data: { display_name?: string; phone?: string; pin_code?: string }) =>
+    mutationFn: (data: { display_name?: string; phone?: string; pin_code?: string; pseudo?: string }) =>
       api.patch("/profiles/me", data).then(res => res.data),
     onSuccess: () => {
       toast.success("Profil mis à jour !");
@@ -172,14 +174,61 @@ const ProfilePage = () => {
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2 mt-1">
-                <p className="text-xs font-medium text-gold">
-                  {profile?.phone || "Numéro non renseigné"}
+                <p className="text-[10px] text-muted-foreground">Tél:</p>
+                <p className="text-xs font-medium text-foreground">
+                  {profile?.phone || "Non renseigné"}
                 </p>
                 <button
                   onClick={() => { setEditingPhone(true); setNewPhone(profile?.phone || ""); }}
                   className="text-muted-foreground hover:text-gold transition-colors"
                 >
                   <Edit2 className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* Pseudo */}
+            {editingPseudo ? (
+              <div className="flex items-center gap-2 justify-center mt-3">
+                <Input
+                  value={newPseudo}
+                  onChange={e => setNewPseudo(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  placeholder="pseudo_unique"
+                  className="max-w-[200px] text-center h-9 text-sm bg-gold/5 border-gold/30 focus:border-gold/60"
+                  autoFocus
+                  onKeyDown={e => e.key === "Enter" && newPseudo && updateProfile.mutate({ pseudo: newPseudo })}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (newPseudo.length < 3) return toast.error("3 caractères min.");
+                    updateProfile.mutate({ pseudo: newPseudo });
+                    setEditingPseudo(false);
+                  }}
+                  disabled={!newPseudo || updateProfile.isPending}
+                  className="h-9 w-9 p-0 gradient-gold"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setEditingPseudo(false)}
+                  className="h-9 w-9 p-0 text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 mt-3 p-2 rounded-xl bg-gold/5 border border-gold/10 max-w-[180px] mx-auto group">
+                <p className="font-display text-sm font-black text-gold">
+                  @{profile?.pseudo || "choisir_pseudo"}
+                </p>
+                <button
+                  onClick={() => { setEditingPseudo(true); setNewPseudo(profile?.pseudo || ""); }}
+                  className="text-gold/40 hover:text-gold transition-colors"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
