@@ -78,7 +78,7 @@ export const adminApi = {
     api.post("/admin/notifications/send", data).then(res => res.data),
   getGlobalStats: () => api.get("/admin/stats/global").then(res => res.data),
   getDailyStats: () => api.get("/admin/stats/daily").then(res => res.data),
-  getAnalyticsSimulations: () => api.get("/admin/stats/simulations").then(res => res.data),
+  getProfitSimulations: () => api.get("/admin/stats/simulations").then(res => res.data),
   getSmartPlayers: () => api.get("/admin/users/smart").then(res => res.data),
   getAuditLogs: () => api.get("/admin/audit/logs").then(res => res.data),
   getFailedSMS: () => api.get("/admin/sms/failed").then(res => res.data),
@@ -88,6 +88,10 @@ export const adminApi = {
     api.get("/admin/maintenance").then(res => res.data),
   forceResolveClosedDraws: () =>
     api.post("/admin/force-resolve-closed").then(res => res.data),
+  getAdmins: () =>
+    api.get("/admin/admins").then(res => res.data),
+  updatePermissions: (data: { userId: string; permissions: string[]; role?: string }) =>
+    api.patch("/admin/permissions", data).then(res => res.data),
 };
 
 export const notificationsApi = {

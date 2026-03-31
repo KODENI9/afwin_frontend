@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { drawsApi, adminApi } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
+import { AdminPermission } from "@/types/auth";
 import {
   BarChart,
   Bar,
@@ -66,7 +67,7 @@ type Filter = "all" | "deposit" | "withdrawal";
 
 const AdminDashboard = () => {
   const queryClient = useQueryClient();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("draws");
   const [expandedSMS, setExpandedSMS] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
@@ -98,14 +99,14 @@ const AdminDashboard = () => {
   const { data: draw, error: drawError } = useQuery({
     queryKey: ["adminDraw"],
     queryFn: () => drawsApi.getCurrent(),
-    enabled: isAdmin,
+    enabled: isAdmin && (hasPermission(AdminPermission.VIEW_DASHBOARD) || hasPermission(AdminPermission.MANAGE_DRAWS)),
   });
 
   // Get draw stats
   const { data: stats } = useQuery({
     queryKey: ["adminDrawStats", draw?.id],
     queryFn: () => adminApi.getDrawStats(draw!.id),
-    enabled: !!draw?.id && isAdmin,
+    enabled: !!draw?.id && isAdmin && hasPermission(AdminPermission.VIEW_ADVANCED_STATS),
   });
 
   // Get pending transactions
@@ -116,7 +117,7 @@ const AdminDashboard = () => {
   } = useQuery({
     queryKey: ["adminPendingTrans"],
     queryFn: () => adminApi.getPendingTransactions(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_FINANCIALS),
   });
 
   // Get networks
@@ -127,63 +128,63 @@ const AdminDashboard = () => {
   } = useQuery({
     queryKey: ["adminNetworks"],
     queryFn: () => adminApi.getNetworks(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.MANAGE_NETWORKS),
   });
 
   // Get game settings
   const { data: gameSettings } = useQuery({
     queryKey: ["gameSettings"],
     queryFn: () => adminApi.getSettings(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.MANAGE_SETTINGS),
   });
 
   // Get users
   const { data: users = [], isLoading: isUsersLoading } = useQuery({
     queryKey: ["adminUsers"],
     queryFn: () => adminApi.getUsers(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_USERS),
   });
 
   // Get global stats
   const { data: globalStats } = useQuery({
     queryKey: ["globalStats"],
     queryFn: () => adminApi.getGlobalStats(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_PROFIT),
   });
 
   // Get failed SMS
   const { data: failedSms = [] } = useQuery({
     queryKey: ["failedSms"],
     queryFn: () => adminApi.getFailedSMS(),
-    enabled: isAdmin,
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_ADVANCED_STATS),
   });
 
   // NEW: Daily stats history
   const { data: dailyHistory } = useQuery({
     queryKey: ["adminDailyStats"],
     queryFn: () => adminApi.getDailyStats(),
-    enabled: isAdmin && (activeTab === "stats" || activeTab === "intelligence"),
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_FINANCIALS) && (activeTab === "stats" || activeTab === "intelligence"),
   });
 
   // NEW: Smart players
   const { data: smartPlayers = [] } = useQuery({
     queryKey: ["adminSmartPlayers"],
     queryFn: () => adminApi.getSmartPlayers(),
-    enabled: isAdmin && activeTab === "intelligence",
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_ADVANCED_STATS) && activeTab === "intelligence",
   });
 
   // NEW: Audit logs
   const { data: auditLogs = [] } = useQuery({
     queryKey: ["adminAuditLogs"],
     queryFn: () => adminApi.getAuditLogs(),
-    enabled: isAdmin && activeTab === "audit",
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_AUDIT_LOGS) && activeTab === "audit",
   });
 
   // NEW: Profit simulations
   const { data: simulations } = useQuery({
     queryKey: ["adminSimulations"],
     queryFn: () => adminApi.getProfitSimulations(),
-    enabled: isAdmin && activeTab === "intelligence",
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_PROFIT) && activeTab === "intelligence",
   });
 
   useEffect(() => {
@@ -377,23 +378,35 @@ const AdminDashboard = () => {
     onError: (err: any) => toast.error(err.response?.data?.error || err.message),
   });
 
-  const TABS: { id: Tab; label: string; icon: any; count?: number }[] = [
-    { id: "draws", label: "Tirages", icon: Dices },
+
+  
+  const ALL_TABS: { id: Tab; label: string; icon: any; count?: number; permission?: AdminPermission }[] = [
+    { id: "draws", label: "Tirages", icon: Dices, permission: AdminPermission.MANAGE_DRAWS },
     {
       id: "payments",
       label: "Paiements",
       icon: Wallet,
       count: allPendingTrans.length,
+      permission: AdminPermission.VIEW_FINANCIALS
     },
-    { id: "stats", label: "Stats", icon: BarChart2 },
-    { id: "intelligence", label: "Intelligence", icon: TrendingUp },
-    { id: "audit", label: "Audit", icon: History },
-    { id: "users", label: "Membres", icon: Users },
-    { id: "networks", label: "Réseaux", icon: Globe },
-    { id: "game_settings", label: "Réglages", icon: Settings },
-    { id: "sms_logs", label: "SMS", icon: MessageSquare },
-    { id: "maintenance", label: "Système", icon: Power },
+    { id: "stats", label: "Stats", icon: BarChart2, permission: AdminPermission.VIEW_PROFIT },
+    { id: "intelligence", label: "Intelligence", icon: TrendingUp, permission: AdminPermission.VIEW_ADVANCED_STATS },
+    { id: "audit", label: "Audit", icon: History, permission: AdminPermission.VIEW_AUDIT_LOGS },
+    { id: "users", label: "Membres", icon: Users, permission: AdminPermission.VIEW_USERS },
+    { id: "networks", label: "Réseaux", icon: Globe, permission: AdminPermission.MANAGE_NETWORKS },
+    { id: "game_settings", label: "Réglages", icon: Settings, permission: AdminPermission.MANAGE_SETTINGS },
+    { id: "sms_logs", label: "SMS", icon: MessageSquare, permission: AdminPermission.VIEW_ADVANCED_STATS },
+    { id: "maintenance", label: "Système", icon: Power, permission: AdminPermission.MANAGE_SETTINGS },
   ];
+
+  const TABS = ALL_TABS.filter(tab => !tab.permission || hasPermission(tab.permission));
+
+  // If active tab was restricted, fallback to first available
+  useEffect(() => {
+    if (TABS.length > 0 && !TABS.find(t => t.id === activeTab)) {
+      setActiveTab(TABS[0].id);
+    }
+  }, [TABS, activeTab]);
 
   return (
     <Layout>
@@ -408,16 +421,18 @@ const AdminDashboard = () => {
               Administration
             </h1>
           </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              setNotifForm({ ...notifForm, target: "all", user_id: "" });
-              setShowNotifModal(true);
-            }}
-            className="h-8 text-[10px] font-black uppercase tracking-widest gradient-gold border-gold/40"
-          >
-            <Megaphone className="w-3.5 h-3.5 mr-1.5" /> Diffusion Globale
-          </Button>
+          {hasPermission(AdminPermission.SEND_GLOBAL_NOTIFICATION) && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setNotifForm({ ...notifForm, target: "all", user_id: "" });
+                setShowNotifModal(true);
+              }}
+              className="h-8 text-[10px] font-black uppercase tracking-widest gradient-gold border-gold/40"
+            >
+              <Megaphone className="w-3.5 h-3.5 mr-1.5" /> Diffusion Globale
+            </Button>
+          )}
         </div>
 
         {/* Tabs - Modern Minimalist Style */}
@@ -991,7 +1006,7 @@ const AdminDashboard = () => {
                     </p>
                     <p className="text-lg font-display font-bold text-gold">
                       {Number(
-                        dailyHistory?.bets?.[dailyHistory.bets.length - 1] || 0,
+                        dailyHistory?.bets?.[(dailyHistory?.bets?.length || 0) - 1] || 0,
                       ).toLocaleString("fr-FR")}
                     </p>
                   </div>
@@ -1002,7 +1017,7 @@ const AdminDashboard = () => {
                     <p className="text-lg font-display font-bold text-emerald-brand">
                       {Number(
                         dailyHistory?.profits?.[
-                          dailyHistory.profits.length - 1
+                          (dailyHistory?.profits?.length || 0) - 1
                         ] || 0,
                       ).toLocaleString("fr-FR")}
                     </p>
@@ -1027,10 +1042,10 @@ const AdminDashboard = () => {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={
-                            dailyHistory?.labels.map((label, i) => ({
+                            dailyHistory?.labels?.map((label, i) => ({
                               day: label,
-                              profit: dailyHistory.profits[i],
-                              bets: dailyHistory.bets[i],
+                              profit: dailyHistory?.profits?.[i] || 0,
+                              bets: dailyHistory?.bets?.[i] || 0,
                             })) || []
                           }
                         >

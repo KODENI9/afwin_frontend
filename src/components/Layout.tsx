@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { Dices, History, Trophy, Wallet, LayoutDashboard, LogOut, Bell, User, Gift, Send } from "lucide-react";
+import { Dices, History, Trophy, Wallet, LayoutDashboard, LogOut, Bell, User, Gift, Send, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { UserRole } from "@/types/auth";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { notificationsApi } from "@/services/api";
@@ -20,7 +21,7 @@ const navItems = [
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications"],
@@ -82,6 +83,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Admin
+              </Link>
+            )}
+            {profile?.role === UserRole.SUPER_ADMIN && (
+              <Link
+                to="/admin/permissions"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  location.pathname === "/admin/permissions"
+                    ? "glass-gold text-gold glow-gold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Sécurité
               </Link>
             )}
           </nav>
