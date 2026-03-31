@@ -104,6 +104,7 @@ const HistoryPage = () => {
              </div>
              <p><span className="text-white/40">Auth Loaded:</span> <span className={user ? "text-emerald-400" : "text-ruby"}>{user ? 'OUI' : 'NON'}</span></p>
              <p><span className="text-white/40">User ID:</span> <span>{user?.id ? user.id : 'NUL'}</span></p>
+             <p><span className="text-white/40">Firebase Project:</span> <span className="text-amber-400 font-bold">{(data?.pages[0] as any)?.debug?.projectId || '...'}</span></p>
              <p><span className="text-white/40">Solde Wallet (CFA):</span> <span className="text-emerald-400 font-bold">{profile?.balance ?? '...'}</span></p>
              <p><span className="text-white/40">API URL:</span> <span className="text-gold font-bold underline">{import.meta.env.VITE_API_URL || 'LOCALFALLBACK'}</span></p>
              <p>
@@ -119,7 +120,7 @@ const HistoryPage = () => {
                  <pre className="whitespace-pre-wrap">{(isError as any)?.message || 'Erreur inconnue'}</pre>
                </div>
              )}
-             <p><span className="text-white/40">Paris Trouves:</span> <span className="text-white">{groups.length}</span></p>
+             <p><span className="text-white/40">Paris Trouves:</span> <span className="text-white">{(data?.pages[0] as any)?.debug?.count ?? groups.length}</span></p>
              <p><span className="text-white/40">Pages Chargees:</span> <span>{data?.pages.length || 0}</span></p>
              
              <button 
