@@ -83,6 +83,33 @@ const HistoryPage = () => {
     <Layout>
       <div className="max-w-2xl mx-auto space-y-8 pb-24 animate-in fade-in duration-700">
         
+        {/* ─── Debug Diagnostic Panel (Temporary) ─── */}
+        {process.env.NODE_ENV === 'development' || true ? ( // Keep true during debug phase
+          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-[10px] space-y-1 font-mono text-zinc-500">
+             <div className="flex justify-between border-b border-white/5 pb-1 mb-2">
+               <span className="text-gold font-bold uppercase">Diagnostic Système</span>
+               <span className="text-emerald-500 font-bold">LIVE</span>
+             </div>
+             <p><span className="text-white/40">Auth Loaded:</span> <span className={user ? "text-emerald-400" : "text-ruby"}>{user ? 'OUI' : 'NON'}</span></p>
+             <p><span className="text-white/40">User ID:</span> <span>{user?.id ? `${user.id.substring(0, 8)}...` : 'NUL'}</span></p>
+             <p><span className="text-white/40">API URL:</span> <span className="text-gold font-bold underline">{import.meta.env.VITE_API_URL || 'LOCALFALLBACK'}</span></p>
+             <p>
+               <span className="text-white/40">Connection Serveur:</span> 
+               <span className={isLoading ? "text-amber-500" : isError ? "text-ruby" : "text-emerald-500"}>
+                 {isLoading ? 'EN ATTENTE...' : isError ? 'ECHEC' : 'OPERATIONNEL'}
+               </span>
+             </p>
+             <p><span className="text-white/40">Query Status:</span> <span className="uppercase">{data ? 'SUCCES' : isError ? 'ERREUR' : isLoading ? 'CHARGEMENT' : 'INCONNU'}</span></p>
+             {isError && (
+               <div className="mt-2 p-2 bg-ruby/10 border border-ruby/20 rounded text-ruby overflow-hidden text-ellipsis">
+                 <p className="font-bold">Détail Erreur :</p>
+                 <pre className="whitespace-pre-wrap">{(isError as any)?.message || 'Erreur inconnue'}</pre>
+               </div>
+             )}
+             <p><span className="text-white/40">Pages Chargees:</span> <span>{data?.pages.length || 0}</span></p>
+          </div>
+        ) : null}
+
         {/* ─── Header & Filter ─── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4">
           <div className="space-y-2">
