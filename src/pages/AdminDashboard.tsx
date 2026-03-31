@@ -62,7 +62,8 @@ type Tab =
   | "sms_logs"
   | "maintenance"
   | "intelligence"
-  | "audit";
+  | "audit"
+  | "notifications";
 type Filter = "all" | "deposit" | "withdrawal";
 
 const AdminDashboard = () => {
@@ -145,11 +146,18 @@ const AdminDashboard = () => {
     enabled: isAdmin && hasPermission(AdminPermission.VIEW_USERS),
   });
 
-  // Get global stats
+  // Get global stats (Conditional for Super/Basic)
   const { data: globalStats } = useQuery({
     queryKey: ["globalStats"],
     queryFn: () => adminApi.getGlobalStats(),
-    enabled: isAdmin && hasPermission(AdminPermission.VIEW_PROFIT),
+    enabled: isAdmin && hasPermission(AdminPermission.VIEW_DASHBOARD),
+  });
+
+  // NEW: Pending notifications for validation (Super Admin)
+  const { data: pendingNotifications = [], isLoading: isNotifsLoading } = useQuery({
+    queryKey: ["pendingNotifications"],
+    queryFn: () => adminApi.getPendingNotifications(),
+    enabled: isAdmin && profile?.role === "super_admin",
   });
 
   // Get failed SMS
@@ -293,18 +301,39 @@ const AdminDashboard = () => {
     onError: (err: any) =>
       toast.error(err.response?.data?.error || err.message),
   });
-  const sendNotifMutation = useMutation({
-    mutationFn: (data: any) => adminApi.sendNotification(data),
-    onSuccess: () => {
-      toast.success("Notification envoyée avec succès");
+  const createNotifMutation = useMutation({
+    mutationFn: (data: any) => adminApi.createGlobalNotification(data),
+    onSuccess: (data) => {
+      toast.success(data.message || "Notification envoyée pour validation");
       setShowNotifModal(false);
       setNotifForm({
         user_id: "",
         title: "",
         message: "",
         type: "info",
-        target: "user",
+        target: "all",
       });
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.error || err.message),
+  });
+
+  const approveNotifMutation = useMutation({
+    mutationFn: (id: string) => adminApi.approveNotification(id),
+    onSuccess: () => {
+      toast.success("Notification approuvée et diffusée");
+      queryClient.invalidateQueries({ queryKey: ["pendingNotifications"] });
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.error || err.message),
+  });
+
+  const rejectNotifMutation = useMutation({
+    mutationFn: (data: { id: string; reason: string }) =>
+      adminApi.rejectNotification(data.id, data.reason),
+    onSuccess: () => {
+      toast.success("Notification rejetée");
+      queryClient.invalidateQueries({ queryKey: ["pendingNotifications"] });
     },
     onError: (err: any) =>
       toast.error(err.response?.data?.error || err.message),
@@ -380,7 +409,7 @@ const AdminDashboard = () => {
 
 
   
-  const ALL_TABS: { id: Tab; label: string; icon: any; count?: number; permission?: AdminPermission }[] = [
+  const ALL_TABS: { id: Tab; label: string; icon: any; count?: number; permission?: AdminPermission; requiresSuperAdmin?: boolean }[] = [
     { id: "draws", label: "Tirages", icon: Dices, permission: AdminPermission.MANAGE_DRAWS },
     {
       id: "payments",
@@ -389,7 +418,14 @@ const AdminDashboard = () => {
       count: allPendingTrans.length,
       permission: AdminPermission.VIEW_FINANCIALS
     },
-    { id: "stats", label: "Stats", icon: BarChart2, permission: AdminPermission.VIEW_PROFIT },
+    { 
+      id: "notifications", 
+      label: "Validations", 
+      icon: MessageSquare, 
+      count: pendingNotifications.length,
+      requiresSuperAdmin: true // Restricted tightly to super_admin
+    },
+    { id: "stats", label: "Stats", icon: BarChart2, permission: AdminPermission.VIEW_DASHBOARD },
     { id: "intelligence", label: "Intelligence", icon: TrendingUp, permission: AdminPermission.VIEW_ADVANCED_STATS },
     { id: "audit", label: "Audit", icon: History, permission: AdminPermission.VIEW_AUDIT_LOGS },
     { id: "users", label: "Membres", icon: Users, permission: AdminPermission.VIEW_USERS },
@@ -399,7 +435,10 @@ const AdminDashboard = () => {
     { id: "maintenance", label: "Système", icon: Power, permission: AdminPermission.MANAGE_SETTINGS },
   ];
 
-  const TABS = ALL_TABS.filter(tab => !tab.permission || hasPermission(tab.permission));
+  const TABS = ALL_TABS.filter(tab => 
+    (!tab.permission || hasPermission(tab.permission)) &&
+    (!tab.requiresSuperAdmin || profile?.role === 'super_admin')
+  );
 
   // If active tab was restricted, fallback to first available
   useEffect(() => {
@@ -610,41 +649,39 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
+                {/* Action Button */}
                 <button
                   onClick={() => performDraw.mutate()}
-                  disabled={
-                    isResolved || totalPool === 0 || performDraw.isPending
-                  }
+                  disabled={isResolved || totalPool === 0 || performDraw.isPending || profile?.role !== "super_admin"}
                   className={`w-full group relative flex items-center justify-center gap-3 font-display font-black text-sm uppercase tracking-[0.2em] h-14 rounded-2xl transition-all duration-500 border shadow-lg ${
                     isResolved
                       ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-brand/50 cursor-not-allowed"
-                      : performDraw.isPending
-                        ? "bg-gold/10 border-gold/20 text-gold cursor-wait"
-                        : "gradient-emerald text-secondary-foreground border-emerald-400/50 hover:scale-[1.02] active:scale-[0.98] hover:shadow-emerald-500/20"
+                      : profile?.role !== "super_admin"
+                        ? "bg-muted/20 border-white/5 text-muted-foreground/50 cursor-not-allowed"
+                        : performDraw.isPending
+                          ? "bg-gold/10 border-gold/20 text-gold cursor-wait"
+                          : "gradient-emerald text-secondary-foreground border-emerald-400/50 hover:scale-[1.02] active:scale-[0.98] hover:shadow-emerald-500/20"
                   }`}
                 >
                   {isResolved ? (
-                    <span
-                      key="draw-resolved"
-                      className="flex items-center gap-2"
-                    >
+                    <span key="draw-resolved" className="flex items-center gap-2">
                       <Trophy className="w-5 h-5" />
                       Tirage Clôturé
                     </span>
+                  ) : profile?.role !== "super_admin" ? (
+                    <span key="draw-restricted" className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 opacity-50" />
+                      Résolution (Super Admin uniquement)
+                    </span>
                   ) : performDraw.isPending ? (
-                    <span
-                      key="draw-pending"
-                      className="flex items-center gap-2"
-                    >
+                    <span key="draw-pending" className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       Traitement...
                     </span>
                   ) : (
                     <span key="draw-ready" className="flex items-center gap-2">
-                      <Zap
-                        className={`w-5 h-5 transition-transform group-hover:scale-125 ${totalPool > 0 ? "text-secondary-foreground" : "opacity-20"}`}
-                      />
-                      Effectuer le Tirage (Auto)
+                      <Zap className={`w-5 h-5 transition-transform group-hover:scale-125 ${totalPool > 0 ? "text-secondary-foreground" : "opacity-20"}`} />
+                      Effectuer le Tirage (Super Admin)
                     </span>
                   )}
                 </button>
@@ -661,7 +698,7 @@ const AdminDashboard = () => {
                     ) : (
                       <Zap className="w-3.5 h-3.5" />
                     )}
-                    {forceResolve.isPending ? 'Résolution...' : '⚡ Débloquer Tirages CLOSED'}
+                    {forceResolve.isPending ? "Résolution..." : "⚡ Débloquer Tirages CLOSED"}
                   </button>
                 )}
               </div>
@@ -985,21 +1022,23 @@ const AdminDashboard = () => {
                       </span>
                     </p>
                   </div>
-                  <div className="glass-card rounded-2xl p-4 border border-white/5 bg-emerald-500/10">
-                    <p className="text-[9px] uppercase text-emerald-400 font-black mb-1">
-                      Bénéfice Net (Bets-Gains)
-                    </p>
-                    <p
-                      className={`text-lg font-display font-bold ${Number(globalStats?.summary?.netProfit || 0) >= 0 ? "text-emerald-brand" : "text-destructive"}`}
-                    >
-                      {Number(
-                        globalStats?.summary?.netProfit || 0,
-                      ).toLocaleString("fr-FR")}{" "}
-                      <span className="text-[10px] font-normal text-muted-foreground">
-                        CFA
-                      </span>
-                    </p>
-                  </div>
+                  {profile?.role === "super_admin" && (
+                    <div className="glass-card rounded-2xl p-4 border border-white/5 bg-emerald-500/10">
+                      <p className="text-[9px] uppercase text-emerald-400 font-black mb-1">
+                        Bénéfice Net (Bets-Gains)
+                      </p>
+                      <p
+                        className={`text-lg font-display font-bold ${Number(globalStats?.summary?.netProfit || 0) >= 0 ? "text-emerald-brand" : "text-destructive"}`}
+                      >
+                        {Number(
+                          globalStats?.summary?.netProfit || 0,
+                        ).toLocaleString("fr-FR")}{" "}
+                        <span className="text-[10px] font-normal text-muted-foreground">
+                          CFA
+                        </span>
+                      </p>
+                    </div>
+                  )}
                   <div className="glass-card rounded-2xl p-4 border border-white/5">
                     <p className="text-[9px] uppercase text-muted-foreground font-black mb-1">
                       Mises du Jour
@@ -1010,181 +1049,118 @@ const AdminDashboard = () => {
                       ).toLocaleString("fr-FR")}
                     </p>
                   </div>
-                  <div className="glass-card rounded-2xl p-4 border border-white/5">
-                    <p className="text-[9px] uppercase text-muted-foreground font-black mb-1">
-                      Profit du Jour
-                    </p>
-                    <p className="text-lg font-display font-bold text-emerald-brand">
-                      {Number(
-                        dailyHistory?.profits?.[
-                          (dailyHistory?.profits?.length || 0) - 1
-                        ] || 0,
-                      ).toLocaleString("fr-FR")}
-                    </p>
-                  </div>
+                  {profile?.role === "super_admin" && (
+                    <div className="glass-card rounded-2xl p-4 border border-white/5">
+                      <p className="text-[9px] uppercase text-muted-foreground font-black mb-1">
+                        Profit du Jour
+                      </p>
+                      <p className="text-lg font-display font-bold text-emerald-brand">
+                        {Number(
+                          dailyHistory?.profits?.[
+                            (dailyHistory?.profits?.length || 0) - 1
+                          ] || 0,
+                        ).toLocaleString("fr-FR")}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* 2. Charts Section */}
-                <div className="space-y-4">
-                  <div className="glass-card rounded-2xl p-5 border border-white/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground">
-                        Profit Net Journalier (30 Jours)
-                      </h2>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] text-muted-foreground">
-                          Profit
-                        </span>
+                {/* 2. Charts Section (Super Admin only) */}
+                {profile?.role === "super_admin" && (
+                  <div className="space-y-4">
+                    <div className="glass-card rounded-2xl p-5 border border-white/5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground">
+                          Profit Net Journalier (30 Jours)
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span className="text-[10px] text-muted-foreground">Profit</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="h-[200px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={
-                            dailyHistory?.labels?.map((label, i) => ({
+                      <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={dailyHistory?.labels?.map((label: any, i: number) => ({
                               day: label,
                               profit: dailyHistory?.profits?.[i] || 0,
                               bets: dailyHistory?.bets?.[i] || 0,
-                            })) || []
-                          }
-                        >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="hsl(220 20% 12%)"
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="day"
-                            tick={{ fill: "hsl(220 10% 50%)", fontSize: 9 }}
-                          />
-                          <YAxis
-                            tick={{ fill: "hsl(220 10% 50%)", fontSize: 9 }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              background: "hsl(224 18% 8%)",
-                              border: "1px solid hsl(220 20% 13%)",
-                              borderRadius: "12px",
-                              color: "hsl(220 15% 92%)",
-                            }}
-                          />
-                          <Bar
-                            dataKey="profit"
-                            fill="#10b981"
-                            radius={[4, 4, 0, 0]}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="glass-card rounded-2xl p-5 border border-white/5">
-                      <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground mb-4">
-                        Répartition du Tirage Actuel
-                      </h2>
-                      <div className="h-[220px] w-full">
-                        {totalPool === 0 ? (
-                          <p className="text-center text-muted-foreground text-sm py-10 italic">
-                            Aucun pari pour le tirage en cours.
-                          </p>
-                        ) : (
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              data={allNumbers}
-                              margin={{
-                                top: 0,
-                                right: 0,
-                                left: -20,
-                                bottom: 0,
-                              }}
-                            >
-                              <XAxis
-                                dataKey="number"
-                                tick={{
-                                  fill: "hsl(220 10% 50%)",
-                                  fontSize: 11,
-                                }}
-                              />
-                              <Tooltip
-                                contentStyle={{
-                                  background: "hsl(224 18% 8%)",
-                                  border: "1px solid hsl(220 20% 13%)",
-                                  borderRadius: "12px",
-                                }}
-                              />
-                              <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                                {allNumbers.map((entry) => (
-                                  <Cell
-                                    key={entry.number}
-                                    fill={
-                                      entry.number === winner?.number &&
-                                      !isResolved
-                                        ? "#10b981"
-                                        : "#f59e0b"
-                                    }
-                                    fillOpacity={entry.total === 0 ? 0.2 : 0.85}
-                                  />
-                                ))}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        )}
+                            })) || []}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 20% 12%)" vertical={false} />
+                            <XAxis dataKey="day" tick={{ fill: "hsl(220 10% 50%)", fontSize: 9 }} />
+                            <YAxis tick={{ fill: "hsl(220 10% 50%)", fontSize: 9 }} />
+                            <Tooltip contentStyle={{ background: "hsl(224 18% 8%)", border: "1px solid hsl(220 20% 13%)", borderRadius: "12px", color: "hsl(220 15% 92%)" }} />
+                            <Bar dataKey="profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
 
-                    <div className="glass-card rounded-2xl p-5 border border-white/5">
-                      <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground mb-4">
-                        Volume vs Gains
-                      </h2>
-                      {/* Additional mini stats or another chart */}
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">
-                            Taux de Payout
-                          </span>
-                          <span className="font-bold">
-                            {globalStats?.summary?.totalBets > 0
-                              ? (
-                                  (globalStats.summary.totalPayouts /
-                                    globalStats.summary.totalBets) *
-                                  100
-                                ).toFixed(1)
-                              : 0}
-                            %
-                          </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="glass-card rounded-2xl p-5 border border-white/5">
+                        <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground mb-4">
+                          Répartition du Tirage Actuel
+                        </h2>
+                        <div className="h-[220px] w-full">
+                          {totalPool === 0 ? (
+                            <p className="text-center text-muted-foreground text-sm py-10 italic">
+                              Aucun pari pour le tirage en cours.
+                            </p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={allNumbers} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                <XAxis dataKey="number" tick={{ fill: "hsl(220 10% 50%)", fontSize: 11 }} />
+                                <Tooltip contentStyle={{ background: "hsl(224 18% 8%)", border: "1px solid hsl(220 20% 13%)", borderRadius: "12px" }} />
+                                <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                                  {allNumbers.map((entry) => (
+                                    <Cell
+                                      key={entry.number}
+                                      fill={entry.number === winner?.number && !isResolved ? "#10b981" : "#f59e0b"}
+                                      fillOpacity={entry.total === 0 ? 0.2 : 0.85}
+                                    />
+                                  ))}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
                         </div>
-                        <Progress
-                          value={
-                            globalStats?.summary?.totalBets > 0
-                              ? (globalStats.summary.totalPayouts /
-                                  globalStats.summary.totalBets) *
-                                100
-                              : 0
-                          }
-                          className="h-2"
-                        />
+                      </div>
 
-                        <div className="pt-4 space-y-2">
-                          <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between">
-                            <span className="text-xs text-muted-foreground">
-                              Total Dépôts
+                      <div className="glass-card rounded-2xl p-5 border border-white/5">
+                        <h2 className="font-display text-xs uppercase tracking-wider text-muted-foreground mb-4">
+                          Volume vs Gains
+                        </h2>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Taux de Payout</span>
+                            <span className="font-bold">
+                              {(globalStats?.summary?.totalBets || 0) > 0
+                                ? (((globalStats?.summary?.totalPayouts || 0) / (globalStats?.summary?.totalBets || 1)) * 100).toFixed(1)
+                                : 0}%
                             </span>
-                            <span className="text-xs font-bold">
-                              {globalStats?.summary?.totalDeposits?.toLocaleString() ||
-                                0}{" "}
-                              CFA
-                            </span>
+                          </div>
+                          <Progress
+                            value={(globalStats?.summary?.totalBets || 0) > 0
+                              ? ((globalStats?.summary?.totalPayouts || 0) / (globalStats?.summary?.totalBets || 1)) * 100
+                              : 0}
+                            className="h-2"
+                          />
+                          <div className="pt-4 space-y-2">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between">
+                              <span className="text-xs text-muted-foreground">Total Dépôts</span>
+                              <span className="text-xs font-bold">
+                                {Number(globalStats?.summary?.totalDeposits || 0).toLocaleString()} CFA
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
-
             {/* ── Onglet Intelligence ── */}
             {activeTab === "intelligence" && (
               <div className="space-y-6 animate-in fade-in duration-500">
@@ -1806,6 +1782,67 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
+
+            {/* ── Onglet Validations de Notifications (Super Admin) ── */}
+            {activeTab === "notifications" && (
+              <div className="space-y-4 animate-in fade-in duration-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-display text-sm font-bold text-foreground">Validation des Notifications</h2>
+                    <p className="text-[10px] text-muted-foreground uppercase font-medium tracking-widest">Contrôle de diffusion globale</p>
+                  </div>
+                  <div className="glass px-3 py-1 rounded-full border border-white/5">
+                    <span className="text-[10px] font-bold text-gold">{pendingNotifications.length} EN ATTENTE</span>
+                  </div>
+                </div>
+
+                {isNotifsLoading ? (
+                   <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>
+                ) : pendingNotifications.length === 0 ? (
+                  <div className="glass-card rounded-3xl p-12 text-center border border-white/5 space-y-3">
+                    <CheckCircle className="w-12 h-12 text-emerald-500/20 mx-auto" />
+                    <p className="text-muted-foreground text-sm font-medium">Aucune notification en attente de validation.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {pendingNotifications.map((notif: any) => (
+                      <div key={notif.id} className="glass-card rounded-2xl p-5 border border-gold/10 space-y-4 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3">
+                           <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                             notif.type === 'warning' ? 'bg-destructive/10 text-destructive' :
+                             notif.type === 'success' ? 'bg-emerald-500/10 text-emerald-brand' : 'bg-gold/10 text-gold'
+                           }`}>{notif.type}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Proposition de diffusion par <span className="text-gold">{notif.creatorName}</span></p>
+                          <h3 className="font-bold text-foreground">{notif.title}</h3>
+                          <p className="text-xs text-muted-foreground leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">{notif.message}</p>
+                        </div>
+                        <div className="flex gap-2">
+                           <Button 
+                             onClick={() => approveNotifMutation.mutate(notif.id)}
+                             disabled={approveNotifMutation.isPending}
+                             className="flex-1 gradient-emerald text-secondary-foreground h-10 text-[11px] font-black uppercase"
+                           >
+                             {approveNotifMutation.isPending ? 'Approbation...' : 'Approuver & Diffuser'}
+                           </Button>
+                           <Button 
+                             variant="outline"
+                             onClick={() => {
+                               const reason = prompt("Motif du rejet :");
+                               if (reason) rejectNotifMutation.mutate({ id: notif.id, reason });
+                             }}
+                             className="flex-1 h-10 text-[11px] font-black uppercase border-destructive/30 text-destructive hover:bg-destructive/5"
+                           >
+                              Rejeter
+                           </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </ErrorBoundary>
 
@@ -1909,19 +1946,19 @@ const AdminDashboard = () => {
                   Annuler
                 </Button>
                 <Button
-                  onClick={() => sendNotifMutation.mutate(notifForm)}
+                  onClick={() => createNotifMutation.mutate(notifForm)}
                   disabled={
-                    sendNotifMutation.isPending ||
+                    createNotifMutation.isPending ||
                     !notifForm.title ||
                     !notifForm.message
                   }
                   className="flex-2 h-12 rounded-2xl font-black uppercase tracking-widest gradient-gold shadow-xl shadow-gold/20"
                 >
-                  {sendNotifMutation.isPending ? (
+                  {createNotifMutation.isPending ? (
                     <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      Envoyer
+                      Soumettre
                       <Zap className="w-4 h-4 ml-2" />
                     </>
                   )}

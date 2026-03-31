@@ -74,8 +74,15 @@ export const adminApi = {
     api.post("/admin/users/update-balance", { user_id, new_balance, reason }).then(res => res.data),
   getUserTransactions: (user_id: string) => 
     api.get(`/admin/users/${user_id}/transactions`).then(res => res.data),
-  sendNotification: (data: { user_id?: string; title: string; message: string; type: string; target: "user" | "all" }) => 
-    api.post("/admin/notifications/send", data).then(res => res.data),
+  createGlobalNotification: (data: { title: string; message: string; type: string }) => 
+    api.post("/admin/notifications/create", data).then(res => res.data),
+  getPendingNotifications: () => 
+    api.get("/admin/notifications/pending").then(res => res.data),
+  approveNotification: (id: string) => 
+    api.post(`/admin/notifications/${id}/approve`).then(res => res.data),
+  rejectNotification: (id: string, reason: string) => 
+    api.post(`/admin/notifications/${id}/reject`, { reason }).then(res => res.data),
+  getBasicStats: () => api.get("/admin/stats/basic").then(res => res.data),
   getGlobalStats: () => api.get("/admin/stats/global").then(res => res.data),
   getDailyStats: () => api.get("/admin/stats/daily").then(res => res.data),
   getProfitSimulations: () => api.get("/admin/stats/simulations").then(res => res.data),
