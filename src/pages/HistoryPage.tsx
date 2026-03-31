@@ -66,12 +66,14 @@ const HistoryPage = () => {
     enabled: !!user,
   });
 
-  const groups = data?.pages.flatMap((page) => page.history) || [];
+  const groups = data?.pages.flatMap((page) => page.history || []).filter(Boolean) || [];
 
   const stats = groups.reduce(
     (acc, group) => {
-      acc.totalBet += group.totalBetAmount;
-      acc.totalWin += group.totalWinAmount;
+      if (group) {
+        acc.totalBet += group.totalBetAmount || 0;
+        acc.totalWin += group.totalWinAmount || 0;
+      }
       return acc;
     },
     { totalBet: 0, totalWin: 0 }
