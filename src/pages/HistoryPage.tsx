@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { History, Dices, Trophy, Clock, ArrowUpRight, ArrowDownRight, Wallet, Loader2, Calendar as CalendarIcon, Filter, Zap, Sparkles } from "lucide-react";
-import { betsApi } from "@/services/api";
+import { betsApi, profileApi } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,19 @@ const HistoryPage = () => {
     enabled: !!user,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => profileApi.getMe(),
+    enabled: !!user,
+  });
+
   const groups = data?.pages.flatMap((page) => page.history || []).filter(Boolean) || [];
+  const queryClient = useQueryClient();
+
+  const handleReset = () => {
+    queryClient.resetQueries();
+    window.location.reload();
+  };
 
   const stats = groups.reduce(
     (acc, group) => {
@@ -85,13 +97,14 @@ const HistoryPage = () => {
         
         {/* ─── Debug Diagnostic Panel (Temporary) ─── */}
         {process.env.NODE_ENV === 'development' || true ? ( // Keep true during debug phase
-          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-[10px] space-y-1 font-mono text-zinc-500">
+          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-[10px] space-y-1 font-mono text-zinc-500 relative">
              <div className="flex justify-between border-b border-white/5 pb-1 mb-2">
                <span className="text-gold font-bold uppercase">Diagnostic Système</span>
                <span className="text-emerald-500 font-bold">LIVE</span>
              </div>
              <p><span className="text-white/40">Auth Loaded:</span> <span className={user ? "text-emerald-400" : "text-ruby"}>{user ? 'OUI' : 'NON'}</span></p>
-             <p><span className="text-white/40">User ID:</span> <span>{user?.id ? `${user.id.substring(0, 8)}...` : 'NUL'}</span></p>
+             <p><span className="text-white/40">User ID:</span> <span>{user?.id ? user.id : 'NUL'}</span></p>
+             <p><span className="text-white/40">Solde Wallet (CFA):</span> <span className="text-emerald-400 font-bold">{profile?.balance ?? '...'}</span></p>
              <p><span className="text-white/40">API URL:</span> <span className="text-gold font-bold underline">{import.meta.env.VITE_API_URL || 'LOCALFALLBACK'}</span></p>
              <p>
                <span className="text-white/40">Connection Serveur:</span> 
@@ -106,7 +119,15 @@ const HistoryPage = () => {
                  <pre className="whitespace-pre-wrap">{(isError as any)?.message || 'Erreur inconnue'}</pre>
                </div>
              )}
+             <p><span className="text-white/40">Paris Trouves:</span> <span className="text-white">{groups.length}</span></p>
              <p><span className="text-white/40">Pages Chargees:</span> <span>{data?.pages.length || 0}</span></p>
+             
+             <button 
+               onClick={handleReset}
+               className="mt-3 w-full p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gold border border-white/10 transition-colors uppercase font-bold"
+             >
+               Force Refresh Cache
+             </button>
           </div>
         ) : null}
 
