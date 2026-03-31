@@ -161,7 +161,24 @@ const HistoryPage = () => {
 
         {/* ─── Draw List ─── */}
         <div className="space-y-6">
-          {isLoading ? (
+          {isError ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center glass-ruby rounded-[3rem] border-dashed border-ruby/20">
+              <div className="w-20 h-20 rounded-3xl bg-ruby/10 flex items-center justify-center mb-6 shadow-inner">
+                <Zap className="w-10 h-10 text-ruby animate-pulse" />
+              </div>
+              <h3 className="text-xl font-black font-display uppercase tracking-widest text-ruby">Erreur de connexion</h3>
+              <p className="text-sm text-balance text-muted-foreground max-w-xs mt-3 opacity-80 font-medium">
+                Impossible de récupérer vos paris. Si vous êtes sur Vercel, vérifiez que votre <code className="bg-white/5 px-1 rounded text-gold">VITE_API_URL</code> utilise bien <code className="text-emerald-400 font-bold">HTTPS</code>.
+              </p>
+              <Button 
+                onClick={() => refetch()} 
+                variant="outline"
+                className="mt-10 rounded-2xl border-ruby/30 text-ruby font-display font-black text-xs px-10 h-14 hover:bg-ruby/10 transition-all"
+              >
+                Tenter de reconnecter
+              </Button>
+            </div>
+          ) : isLoading ? (
             <div className="space-y-6">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-64 w-full rounded-[2.5rem] bg-white/5" />
