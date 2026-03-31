@@ -95,43 +95,6 @@ const HistoryPage = () => {
     <Layout>
       <div className="max-w-2xl mx-auto space-y-8 pb-24 animate-in fade-in duration-700">
         
-        {/* ─── Debug Diagnostic Panel (Temporary) ─── */}
-        {process.env.NODE_ENV === 'development' || true ? ( // Keep true during debug phase
-          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-[10px] space-y-1 font-mono text-zinc-500 relative">
-             <div className="flex justify-between border-b border-white/5 pb-1 mb-2">
-               <span className="text-gold font-bold uppercase">Diagnostic Système</span>
-               <span className="text-emerald-500 font-bold">LIVE</span>
-             </div>
-             <p><span className="text-white/40">Auth Loaded:</span> <span className={user ? "text-emerald-400" : "text-ruby"}>{user ? 'OUI' : 'NON'}</span></p>
-             <p><span className="text-white/40">User ID:</span> <span>{user?.id ? user.id : 'NUL'}</span></p>
-             <p><span className="text-white/40">Firebase Project:</span> <span className="text-amber-400 font-bold">{(data?.pages[0] as any)?.debug?.projectId || '...'}</span></p>
-             <p><span className="text-white/40">Solde Wallet (CFA):</span> <span className="text-emerald-400 font-bold">{profile?.balance ?? '...'}</span></p>
-             <p><span className="text-white/40">API URL:</span> <span className="text-gold font-bold underline">{import.meta.env.VITE_API_URL || 'LOCALFALLBACK'}</span></p>
-             <p>
-               <span className="text-white/40">Connection Serveur:</span> 
-               <span className={isLoading ? "text-amber-500" : isError ? "text-ruby" : "text-emerald-500"}>
-                 {isLoading ? 'EN ATTENTE...' : isError ? 'ECHEC' : 'OPERATIONNEL'}
-               </span>
-             </p>
-             <p><span className="text-white/40">Query Status:</span> <span className="uppercase">{data ? 'SUCCES' : isError ? 'ERREUR' : isLoading ? 'CHARGEMENT' : 'INCONNU'}</span></p>
-             {isError && (
-               <div className="mt-2 p-2 bg-ruby/10 border border-ruby/20 rounded text-ruby overflow-hidden text-ellipsis">
-                 <p className="font-bold">Détail Erreur :</p>
-                 <pre className="whitespace-pre-wrap">{(isError as any)?.message || 'Erreur inconnue'}</pre>
-               </div>
-             )}
-             <p><span className="text-white/40">Paris Trouves:</span> <span className="text-white">{(data?.pages[0] as any)?.debug?.count ?? groups.length}</span></p>
-             <p><span className="text-white/40">Pages Chargees:</span> <span>{data?.pages.length || 0}</span></p>
-             
-             <button 
-               onClick={handleReset}
-               className="mt-3 w-full p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gold border border-white/10 transition-colors uppercase font-bold"
-             >
-               Force Refresh Cache
-             </button>
-          </div>
-        ) : null}
-
         {/* ─── Header & Filter ─── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4">
           <div className="space-y-2">
