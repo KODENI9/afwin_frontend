@@ -45,10 +45,12 @@ export const betsApi = {
   placeBet: (draw_id: string, entries: { number: number; amount: number }[], request_id: string) =>
     api.post("/bets", { draw_id, entries, request_id }).then(res => res.data),
   getMyBets: () => api.get("/bets/my-bets").then(res => res.data || []),
-  getMyHistory: (limit = 20, lastDocId?: string) => {
+  getMyHistory: (limit = 20, lastDocId?: string, startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
     params.append("limit", limit.toString());
     if (lastDocId) params.append("lastDocId", lastDocId);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
     return api.get(`/bets/my-history?${params.toString()}`).then(res => res.data);
   },
 };

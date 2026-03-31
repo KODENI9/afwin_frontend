@@ -17,6 +17,22 @@ interface BetEntryDraft {
 
 const QUICK_AMOUNTS = [100, 200, 500, 1000];
 
+const generateUUID = () => {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch (e) {
+    // Ignore and use fallback
+  }
+  // Fallback for non-secure contexts (HTTP) or older environments
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const BettingPage = () => {
   // Map: number → amount string (selected entries)
   const [entries, setEntries] = useState<Record<number, string>>({});
@@ -95,7 +111,7 @@ const BettingPage = () => {
   const placeBet = useMutation({
     mutationFn: async () => {
       if (!todayDraw?.id) throw new Error("Tirage introuvable");
-      const requestId = crypto.randomUUID(); // Unique ID for idempotency
+      const requestId = generateUUID(); // Unique ID for idempotency
       const payload = selectedNumbers.map(n => ({
         number: n,
         amount: parseFloat(entries[n] || "0"),

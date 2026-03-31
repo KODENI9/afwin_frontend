@@ -12,6 +12,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const navItems = [
   { to: "/play", label: "Parier", icon: Dices },
   { to: "/referrals", label: "Cadeaux", icon: Gift },
+  {to: "/history", label:"Historique", icon: History},
   { to: "/results", label: "Résultats", icon: Trophy },
   { to: "/wallet", label: "Banque", icon: Wallet },
   { to: "/send-money", label: "Envoi", icon: Send },

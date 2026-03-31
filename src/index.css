@@ -51,6 +51,9 @@
     --emerald: 162 78% 40%;
     --emerald-dim: 162 60% 26%;
     --emerald-subtle: 162 50% 12%;
+    --ruby: 0 72% 51%;
+    --ruby-dim: 0 60% 35%;
+    --ruby-subtle: 0 50% 15%;
 
     /* Gradient stops */
     --gradient-gold-start: hsl(43 96% 62%);
@@ -205,11 +208,37 @@
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid hsl(var(--emerald) / 0.2);
   }
+  .glass-ruby {
+    background: hsl(var(--ruby) / 0.06);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(var(--ruby) / 0.2);
+  }
   .glass-card {
     background: linear-gradient(135deg, hsl(var(--card) / 0.9), hsl(var(--card) / 0.95));
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid hsl(var(--foreground) / 0.06);
+  }
+
+  /* ─── Glow Effects ─── */
+  .glow-gold {
+    box-shadow:
+      0 0 20px hsl(43 96% 56% / 0.25),
+      0 0 60px hsl(43 96% 56% / 0.08),
+      0 4px 20px hsl(0 0% 0% / 0.3);
+  }
+  .glow-emerald {
+    box-shadow:
+      0 0 20px hsl(162 78% 40% / 0.25),
+      0 0 60px hsl(162 78% 40% / 0.08),
+      0 4px 20px hsl(0 0% 0% / 0.3);
+  }
+  .glow-ruby {
+    box-shadow:
+      0 0 20px hsl(var(--ruby) / 0.25),
+      0 0 60px hsl(var(--ruby) / 0.08),
+      0 4px 20px hsl(0 0% 0% / 0.3);
   }
 
   /* ─── Interactive elements ─── */
