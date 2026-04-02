@@ -37,7 +37,7 @@ const ResultsPage = () => {
 
   // Check if current user is a winner
   const winningBet = latest 
-    ? myBets.find((b: any) => b.draw_id === latest.id && b.status === "won")
+    ? myBets.find((b: any) => b.draw_id === latest.id && b.status === "WON")
     : null;
 
   useEffect(() => {

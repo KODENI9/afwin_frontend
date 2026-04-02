@@ -366,7 +366,8 @@ const AdminDashboard = () => {
 
   const sorted = [...allNumbers].sort((a, b) => a.total - b.total);
   const maxBet = Math.max(...allNumbers.map((b) => b.total), 1);
-  const winner = sorted.find((s) => s.total > 0) || sorted[0];
+  // FIX: Le gagnant attendu est TOUJOURS celui avec le minimum absolu (incluant les zéros)
+  const winner = sorted[0];
   const isResolved = draw?.status === "RESOLVED";
 
   const performDraw = useMutation({
@@ -579,7 +580,8 @@ const AdminDashboard = () => {
                   <div className="grid gap-4">
                     {sorted.map((item, idx) => {
                       const pct = maxBet > 0 ? (item.total / maxBet) * 100 : 0;
-                      const isMin = idx === 0 && item.total > 0;
+                      // FIX: Marquer comme minimum même si c'est 0 (car c'est le but du système)
+                      const isMin = idx === 0;
                       const isWinningNumber =
                         isResolved && draw?.winningNumber === item.number;
 
