@@ -24,6 +24,8 @@ export interface UserProfile {
   display_name: string;
   balance: number;
   role: UserRole | string;
+  pseudo:string;
+  pin_code:string;
   permissions: AdminPermission[] | string[];
   referral_code: string;
   email?: string;
