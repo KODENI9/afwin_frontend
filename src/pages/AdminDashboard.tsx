@@ -49,7 +49,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-
+import FlashAdminTab from "@/components/FlashAdminTab";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 type Tab =
@@ -58,6 +58,7 @@ type Tab =
   | "stats"
   | "networks"
   | "users"
+  | "flash"
   | "game_settings"
   | "sms_logs"
   | "maintenance"
@@ -412,6 +413,7 @@ const AdminDashboard = () => {
   
   const ALL_TABS: { id: Tab; label: string; icon: any; count?: number; permission?: AdminPermission; requiresSuperAdmin?: boolean }[] = [
     { id: "draws", label: "Tirages", icon: Dices, permission: AdminPermission.MANAGE_DRAWS },
+    { id: "flash", label: "Flash", icon: Zap, permission: AdminPermission.MANAGE_FLASH },
     {
       id: "payments",
       label: "Paiements",
@@ -1845,6 +1847,8 @@ const AdminDashboard = () => {
                 )}
               </div>
             )}
+            {/* ── Onglet Flash draw*/}
+            {activeTab === "flash" && <FlashAdminTab />}
           </div>
         </ErrorBoundary>
 
