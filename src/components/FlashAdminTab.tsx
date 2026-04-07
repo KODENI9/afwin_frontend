@@ -127,7 +127,7 @@ const FlashAdminTab = () => {
       multiplier: 8,
       enabled: true,
     }]);
-  };
+  };  
 
   const updateSlot = (idx: number, field: string, value: any) => {
     setSlots(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));

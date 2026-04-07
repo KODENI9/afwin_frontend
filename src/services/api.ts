@@ -52,14 +52,14 @@ export const flashApi = {
   // Public
   getActive: () => api.get("/flash/active").then(r => r.data),
 
-  // Admin
+  // Admin — routes montées sur /api/flash (flash.routes.ts)
   create: (data: { label: string; durationMinutes: number; multiplier: number }) =>
-    api.post("/admin/flash/create", data).then(r => r.data),
+    api.post("/flash/create", data).then(r => r.data),
   resolve: (flash_id: string) =>
-    api.post("/admin/flash/resolve", { flash_id }).then(r => r.data),
-  list: () => api.get("/admin/flash/list").then(r => r.data || []),
-  getSchedule: () => api.get("/admin/flash/schedule").then(r => r.data),
-  saveSchedule: (config: any) => api.post("/admin/flash/schedule", { config }).then(r => r.data),
+    api.post("/flash/resolve", { flash_id }).then(r => r.data),
+  list: () => api.get("/flash/list").then(r => r.data || []),
+  getSchedule: () => api.get("/flash/schedule").then(r => r.data),
+  saveSchedule: (config: any) => api.post("/flash/schedule", { config }).then(r => r.data),
 };
 
 export const adminApi = {
