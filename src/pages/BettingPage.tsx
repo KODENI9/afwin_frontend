@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSound } from "@/hooks/useSound";
 import CountdownTimer from "@/components/CountdownTimer";
 import { flashApi } from "@/services/api";
+import LiveChat from "@/components/LiveChat";
 
 interface BetEntryDraft {
   number: number;
@@ -528,6 +529,12 @@ const BettingPage = () => {
             </>
           )}
         </Button>
+        {todayDraw && (
+        <LiveChat
+            drawId={bettingOnFlash ? activeFlash?.id : todayDraw.id}
+            drawStatus={bettingOnFlash ? activeFlash?.status : todayDraw.status}
+          />
+        )}
       </div>
     </Layout>
   );
