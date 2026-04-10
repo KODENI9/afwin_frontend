@@ -51,15 +51,24 @@ const AuthPage = () => {
           )}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground">
-          {isLogin ? "Pas encore de compte ?" : "Déjà un compte ?"}{" "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-gold hover:underline font-medium"
-          >
-            {isLogin ? "S'inscrire" : "Se connecter"}
-          </button>
-        </p>
+        <div className="pt-6 border-t border-white/5 space-y-4">
+          <p className="text-center text-sm text-muted-foreground">
+            {isLogin ? "Pas encore de compte ?" : "Déjà un compte ?"}{" "}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-gold hover:underline font-medium"
+            >
+              {isLogin ? "S'inscrire" : "Se connecter"}
+            </button>
+          </p>
+
+          <div className="flex justify-center">
+            <a href="/live" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all group">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-muted-foreground group-hover:text-gold uppercase tracking-widest">Voir le tirage en direct sans compte</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

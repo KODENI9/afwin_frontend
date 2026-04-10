@@ -28,11 +28,19 @@ const Index = () => {
           </div>
           <span className="font-display text-lg font-bold gradient-text-gold tracking-wider">AF-WIN</span>
         </div>
-        <Link to="/auth">
-          <Button variant="outline" size="sm" className="border-white/10 text-muted-foreground hover:text-gold hover:border-gold/40 transition-all duration-200">
-            Connexion
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/live">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all group">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Direct Live</span>
+            </div>
+          </Link>
+          <Link to="/auth">
+            <Button variant="outline" size="sm" className="border-white/10 text-muted-foreground hover:text-gold hover:border-gold/40 transition-all duration-200">
+              Connexion
+            </Button>
+          </Link>
+        </div>
       </header>
 
       {/* ── Hero ── */}
@@ -61,16 +69,22 @@ const Index = () => {
           Choisissez un chiffre entre 1 et 9 et multipliez vos CFA par {settings?.multiplier || 5} à chaque tirage gagnant.
         </p>
 
-        <Link to="/play">
-          <Button
-            size="lg"
-            className="relative gradient-gold text-primary-foreground font-display font-bold text-lg px-10 py-7 rounded-2xl glow-gold-strong hover:opacity-95 transition-all duration-200 group overflow-hidden"
-          >
-            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            Participer au tirage
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform duration-200" />
-          </Button>
-        </Link>
+        <div className="flex flex-col items-center gap-4">
+          <Link to="/play">
+            <Button
+              size="lg"
+              className="relative gradient-gold text-primary-foreground font-display font-bold text-lg px-10 py-7 rounded-2xl glow-gold-strong hover:opacity-95 transition-all duration-200 group overflow-hidden"
+            >
+              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              Participer au tirage
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform duration-200" />
+            </Button>
+          </Link>
+          <Link to="/live" className="text-xs font-bold text-muted-foreground hover:text-gold transition-colors flex items-center gap-2 group">
+            <div className="w-1 h-1 rounded-full bg-muted-foreground group-hover:bg-gold" />
+            Regarder sans s'inscrire (Mode Spectateur)
+          </Link>
+        </div>
       </section>
 
       {/* ── How it works ── */}

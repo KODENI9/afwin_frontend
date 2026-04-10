@@ -8,6 +8,8 @@ import { notificationsApi } from "@/services/api";
 import ProfileBanner from "./ProfileBanner";
 import InstallPrompt from "./InstallPrompt";
 import { ThemeToggle } from "./ThemeToggle";
+import Footer from "./Footer";
+import { MessageCircle } from "lucide-react";
 
 const navItems = [
   { to: "/play",       label: "Parier",     icon: Dices   },
@@ -230,10 +232,24 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </nav>
 
       {/* ── Contenu principal ── */}
-      <main className="container py-6 md:py-8 pb-24 md:pb-8">
+      <main className="container py-6 md:py-8 pb-24 md:pb-8 flex-1">
         {children}
         <InstallPrompt />
       </main>
+
+      {/* ── Bouton Support Flottant ── */}
+      <a
+        href="https://wa.me/22890513279"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[60] w-14 h-14 rounded-full gradient-gold shadow-2xl shadow-gold/40 flex items-center justify-center text-primary-foreground hover:scale-110 active:scale-95 transition-all duration-300 group"
+      >
+        <div className="absolute inset-0 rounded-full bg-gold animate-ping opacity-20 group-hover:opacity-40" />
+        <MessageCircle className="w-6 h-6 relative z-10" />
+        <span className="absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-background border border-gold/20 text-gold text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"> Support WhatsApp </span>
+      </a>
+
+      <Footer />
     </div>
   );
 };

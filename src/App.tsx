@@ -21,6 +21,10 @@ import ReferralPage from "./pages/ReferralPage";
 import SendMoneyPage from "./pages/SendMoneyPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import NotFound from "./pages/NotFound";
+import LiveSpectatorPage from "./pages/LiveSpectatorPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import ResponsibleGamingPage from "./pages/ResponsibleGamingPage";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -34,7 +38,6 @@ const AppContent = () => {
   const { isLoaded } = useClerkAuth();
 
   useEffect(() => {
-    // Capture referral code from URL
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) {
@@ -53,8 +56,12 @@ const AppContent = () => {
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
             <Routes>
+              {/* ── Routes publiques ── */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/live" element={<LiveSpectatorPage />} /> {/* ← public, sans compte */}
+
+              {/* ── Routes protégées ── */}
               <Route path="/play" element={<ProtectedRoute><BettingPage /></ProtectedRoute>} />
               <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
               <Route path="/results" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
@@ -63,8 +70,16 @@ const AppContent = () => {
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/referrals" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
+
+              {/* ── Routes admin ── */}
               <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/permissions" element={<ProtectedRoute adminOnly><PermissionsPage /></ProtectedRoute>} />
+
+              {/* ── Routes Légales ── */}
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/responsible-gaming" element={<ResponsibleGamingPage />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

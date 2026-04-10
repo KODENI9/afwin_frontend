@@ -28,9 +28,10 @@ export const walletApi = {
 };
 
 export const drawsApi = {
+  getLive: () => api.get("/draws/active").then(r => r.data),
   getCurrent: () => api.get("/draws/current").then(r => r.data),
   getHistory: () => api.get("/draws/history").then(r => r.data || []),
-  getSettings: () => api.get("/draws/settings").then(r => r.data),
+  getSettings: () => api.get("/admin/settings").then(r => r.data),
 };
 
 export const betsApi = {

@@ -10,6 +10,7 @@ import { useSound } from "@/hooks/useSound";
 import CountdownTimer from "@/components/CountdownTimer";
 import { flashApi } from "@/services/api";
 import LiveChat from "@/components/LiveChat";
+import DrawAnimation from "@/components/DrawAnimation";
 
 interface BetEntryDraft {
   number: number;
@@ -157,6 +158,8 @@ const BettingPage = () => {
   const { user, balance, refreshBalance } = useAuth();
   const { playBet } = useSound();
   const queryClient = useQueryClient();
+  const [showAnimation, setShowAnimation] = useState(false);
+  const lastResolvedId = useRef<string | null>(null);
 
   // Draw normal
   const { data: todayDraw, isLoading: isDrawLoading } = useQuery({
@@ -179,7 +182,13 @@ const BettingPage = () => {
       setEntries({});
       prevDrawIdRef.current = todayDraw.id;
     }
-  }, [todayDraw?.id]);
+
+    // Déclencher l'animation si un tirage vient d'être résolu
+    if (todayDraw?.status === 'RESOLVED' && todayDraw.winningNumber && todayDraw.id !== lastResolvedId.current) {
+      setShowAnimation(true);
+      lastResolvedId.current = todayDraw.id;
+    }
+  }, [todayDraw]);
 
   // Quand on switch vers Flash, reset le dismiss
   useEffect(() => {
@@ -280,6 +289,11 @@ const BettingPage = () => {
 
   return (
     <Layout>
+      <DrawAnimation 
+        isVisible={showAnimation} 
+        winningNumber={todayDraw?.winningNumber} 
+        onClose={() => setShowAnimation(false)} 
+      />
       <div className="max-w-lg mx-auto space-y-6 pb-20">
 
         {/* ── Bandeau Flash Draw ── */}
